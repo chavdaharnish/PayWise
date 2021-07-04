@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +19,8 @@ class DetailPage extends StatefulWidget {
 
 class _DetailPageState extends State<DetailPage> {
   Future _data;
-  String friendEmail;
+  String name;
+  String currentUserNumber;
   int count = 0;
   void initState() {
     getFriend();
@@ -26,49 +28,49 @@ class _DetailPageState extends State<DetailPage> {
     super.initState();
   }
 
-  getFriend() {
-    CollectionReference getFriendEmail =
+  getFriend() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String email = prefs.getString('email');
+    CollectionReference getUserMobileNumber =
         FirebaseFirestore.instance.collection('Customer_Sign_In');
-    getFriendEmail
-        .where('mobile', isEqualTo: widget.post['mobile'])
-        .get()
-        .then((value) => {
-              if (value.size > 0)
-                {
-                  value.docs.forEach((element) {
-                    if (element['email'] != null) {
-                      setState(() {
-                        count = 1;
-                        if (count == 1) {
-                          _data = getData();
-                          count = 0;
-                        }
-                        friendEmail = element['email'];
-                      });
-                    } else {
-                      Fluttertoast.showToast(
-                          msg: 'Email doesn\'t match',
-                          toastLength: Toast.LENGTH_SHORT,
-                          gravity: ToastGravity.BOTTOM,
-                          timeInSecForIosWeb: 1,
-                          backgroundColor: Colors.blue,
-                          textColor: Colors.white,
-                          fontSize: 16.0);
+    getUserMobileNumber.where('email', isEqualTo: email).get().then((value) => {
+          if (value.size > 0)
+            {
+              value.docs.forEach((element) {
+                if (element['fname'] != null && element['lname'] != null) {
+                  setState(() {
+                    count = 1;
+                    if (count == 1) {
+                      _data = getData();
+                      count = 0;
                     }
-                  })
-                }
-              else
-                {
+                    currentUserNumber = element['mobile'];
+                    name = element['fname'] + ' ' + element['lname'];
+                  });
+                } else {
                   Fluttertoast.showToast(
-                      msg: 'Friend Email doesn\'t match',
+                      msg: 'Email doesn\'t match',
                       toastLength: Toast.LENGTH_SHORT,
                       gravity: ToastGravity.BOTTOM,
                       timeInSecForIosWeb: 1,
                       backgroundColor: Colors.blue,
                       textColor: Colors.white,
-                      fontSize: 16.0)
+                      fontSize: 16.0);
                 }
-            });
+              })
+            }
+          else
+            {
+              Fluttertoast.showToast(
+                  msg: 'Friend Email doesn\'t match',
+                  toastLength: Toast.LENGTH_SHORT,
+                  gravity: ToastGravity.BOTTOM,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.blue,
+                  textColor: Colors.white,
+                  fontSize: 16.0)
+            }
+        });
   }
 
   getData() async {
@@ -79,7 +81,7 @@ class _DetailPageState extends State<DetailPage> {
         .collection('Customer_Sign_In')
         .doc(email)
         .collection('friends')
-        .doc(friendEmail)
+        .doc(widget.post['email'])
         .collection('Expense')
         .get();
     return qn.docs;
@@ -90,170 +92,186 @@ class _DetailPageState extends State<DetailPage> {
   TextEditingController _amountController = TextEditingController();
   @override
   Widget build(BuildContext context) {
+    final bool showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.post['name'],
-          style: TextStyle(
-              color: Colors.black,
-              fontFamily: 'muli',
-              fontWeight: FontWeight.bold),
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: Text(
+            widget.post['name'],
+            style: TextStyle(
+                color: Colors.black,
+                fontFamily: 'muli',
+                fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF00BCD4),
-        foregroundColor: Colors.white,
-        onPressed: _displayDialog,
-        label: Text("Add Expense"),
-        icon: Icon(Icons.add_circle),
-      ),
-      body: Container(
-        padding: EdgeInsets.all(8.0),
-        child: FutureBuilder(
-            future: _data,
-            // ignore: missing_return
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(
-                  child: Text("Loading..."),
-                );
-              } else {
-                if (snapshot.data != null) {
-                  if (snapshot.data.length > 0) {
-                    return ListView.separated(
-                        scrollDirection: Axis.vertical,
-                        padding: EdgeInsets.all(5),
-                        clipBehavior: Clip.hardEdge,
-                        separatorBuilder: (context, index) => Divider(
-                              color: Colors.white,
-                              height: 20,
-                              thickness: 0,
-                            ),
-                        shrinkWrap: false,
-                        itemCount: snapshot.data.length,
-                        itemBuilder: (context, index) {
-                          final item = snapshot.data[index].toString();
-                          return Dismissible(
-                              key: Key(item),
-                              onDismissed: (direction) {},
-                              background: Container(
-                                  color: Colors.red,
-                                  child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Padding(
-                                          padding: EdgeInsets.only(
-                                              right:
-                                                  getProportionateScreenWidth(
-                                                      20)),
-                                          child: Icon(
-                                            Icons.delete_forever,
-                                            color: Colors.white,
-                                          ),
-                                        )
-                                      ])),
-                              child: Container(
-                                child: ListTile(
-                                    // leading: Image.asset(
-                                    //   "assets/images/app_logo.png",
-                                    // ),
-                                    trailing: Text(
-                                        '\u20B9' +
-                                            snapshot.data[index]
-                                                .data()['amount'],
-                                        style: TextStyle(
-                                            color: Colors.red,
-                                            fontFamily: 'Muli',
-                                            fontWeight: FontWeight.bold,
-                                            fontSize:
-                                                getProportionateScreenWidth(
-                                                    15))),
-                                    title: Text.rich(
-                                      TextSpan(
-                                        style: TextStyle(color: Colors.black),
-                                        children: [
-                                          TextSpan(
-                                            text: 'From : ' +
-                                                snapshot.data[index]
-                                                    .data()['from'],
-                                            style: TextStyle(
-                                              fontFamily: 'Muli',
-                                              fontSize:
-                                                  getProportionateScreenWidth(
-                                                      14),
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    subtitle: Text.rich(
-                                      TextSpan(
-                                        style: TextStyle(color: Colors.black),
-                                        children: [
-                                          TextSpan(
-                                              text: 'To : ' +
-                                                  snapshot.data[index]
-                                                      .data()['to']),
-                                          TextSpan(
-                                              text: '\nDescription : ' +
-                                                  snapshot.data[index]
-                                                      .data()['description']),
-                                        ],
-                                      ),
-                                    ),
-                                    onTap: () => {
-                                          // navigateToDetail(snapshot.data[index]),
-                                        }),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(8),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.5),
-                                      blurRadius: 6,
-                                      offset: Offset(-4, 4),
-                                    ),
-                                  ],
-                                ),
-                              ));
-                        });
-                  } else {
-                    return Column(
-                      // mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: getProportionateScreenHeight(150),
-                        ),
-                        Center(
-                            child: Image.asset(
-                          'assets/images/broke.png',
-                          scale: 2,
-                        )),
-                        Text(
-                          'No Expanses Yet',
-                          style: TextStyle(
-                              fontFamily: 'Muli',
-                              color: Colors.grey,
-                              // fontWeight: FontWeight.bold,
-                              fontSize: getProportionateScreenWidth(22)),
-                        )
-                      ],
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: showFab
+            ? Transform.scale(
+                scale: 1.1,
+                child: FloatingActionButton.extended(
+                  backgroundColor: const Color(0xFF00BCD4),
+                  foregroundColor: Colors.white,
+                  onPressed: _displayDialog,
+                  label: Text("Add Expense"),
+                  icon: Icon(Icons.add_circle),
+                ),
+              )
+            : null,
+        body: SafeArea(
+          child: Container(
+            padding: EdgeInsets.all(8.0),
+            child: FutureBuilder(
+                future: _data,
+                // ignore: missing_return
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(
+                      child: Text("Loading..."),
                     );
+                  } else {
+                    if (snapshot.data != null) {
+                      if (snapshot.data.length > 0) {
+                        return ListView.separated(
+                            scrollDirection: Axis.vertical,
+                            padding: EdgeInsets.all(5),
+                            clipBehavior: Clip.hardEdge,
+                            separatorBuilder: (context, index) => Divider(
+                                  color: Colors.white,
+                                  height: 20,
+                                  thickness: 0,
+                                ),
+                            shrinkWrap: false,
+                            itemCount: snapshot.data.length,
+                            itemBuilder: (context, index) {
+                              final item = snapshot.data[index].toString();
+                              return Dismissible(
+                                  key: Key(item),
+                                  onDismissed: (direction) {},
+                                  background: Container(
+                                      color: Colors.red,
+                                      child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                  right:
+                                                      getProportionateScreenWidth(
+                                                          20)),
+                                              child: Icon(
+                                                Icons.delete_forever,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          ])),
+                                  child: Container(
+                                    child: ListTile(
+                                        // leading: Image.asset(
+                                        //   "assets/images/app_logo.png",
+                                        // ),
+                                        trailing: Text(
+                                            '\u20B9' +
+                                                snapshot.data[index]
+                                                    .data()['amount'],
+                                            style: TextStyle(
+                                                color: snapshot.data[index]
+                                                            .data()['from'] ==
+                                                        currentUserNumber
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                                fontFamily: 'Muli',
+                                                fontWeight: FontWeight.bold,
+                                                fontSize:
+                                                    getProportionateScreenWidth(
+                                                        15))),
+                                        title: Text.rich(
+                                          TextSpan(
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                            children: [
+                                              TextSpan(
+                                                text: 'From : ' +
+                                                    snapshot.data[index]
+                                                        .data()['fromName'],
+                                                style: TextStyle(
+                                                  fontFamily: 'Muli',
+                                                  fontSize:
+                                                      getProportionateScreenWidth(
+                                                          14),
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        subtitle: Text.rich(
+                                          TextSpan(
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                            children: [
+                                              TextSpan(
+                                                  text: 'To : ' +
+                                                      snapshot.data[index]
+                                                          .data()['toName']),
+                                              TextSpan(
+                                                  text: '\nDescription : ' +
+                                                      snapshot.data[index]
+                                                              .data()[
+                                                          'description']),
+                                            ],
+                                          ),
+                                        ),
+                                        onTap: () => {
+                                              // navigateToDetail(snapshot.data[index]),
+                                            }),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.5),
+                                          blurRadius: 6,
+                                          offset: Offset(-4, 4),
+                                        ),
+                                      ],
+                                    ),
+                                  ));
+                            });
+                      } else {
+                        return Column(
+                          // mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(
+                              height: getProportionateScreenHeight(150),
+                            ),
+                            Center(
+                                child: Image.asset(
+                              'assets/images/broke.png',
+                              scale: 2,
+                            )),
+                            Text(
+                              'No Expanses Yet',
+                              style: TextStyle(
+                                  fontFamily: 'Muli',
+                                  color: Colors.grey,
+                                  // fontWeight: FontWeight.bold,
+                                  fontSize: getProportionateScreenWidth(22)),
+                            )
+                          ],
+                        );
+                      }
+                    }
                   }
-                }
-              }
-            }),
-      ),
-    );
+                }),
+          ),
+        ));
   }
 
   _displayDialog() {
     return showDialog(
+        useSafeArea: true,
         context: context,
         builder: (BuildContext context) {
           return StatefulBuilder(builder: (context, setState) {
@@ -264,127 +282,139 @@ class _DetailPageState extends State<DetailPage> {
                 elevation: 6,
                 backgroundColor: Colors.transparent,
                 child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.rectangle,
-                    borderRadius: BorderRadius.all(Radius.circular(10)),
-                  ),
-                  child: Column(
-                    children: <Widget>[
-                      SizedBox(height: 24),
-                      Text(
-                        "add expense".toUpperCase(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17,
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      // Padding(
-                      //   padding:
-                      //       EdgeInsets.only(top: 10, bottom: 10, right: 15, left: 15),
-                      //   child: Icon(
-                      //     Icons.account_circle,
-                      //     size: 100,
-                      //   ),
-                      // ),
-                      Padding(
-                          padding:
-                              EdgeInsets.only(top: 10, right: 15, left: 15),
-                          child: TextFormField(
-                            maxLines: 1,
-                            autofocus: true,
-                            controller: _descriptionController,
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                              labelText: 'Description',
-                              hintText: 'Description',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                              ),
-                            ),
-                          )),
-                      Container(
-                        width: 150.0,
-                        height: 1.0,
-                        color: Colors.grey[400],
-                      ),
-                      Padding(
-                          padding:
-                              EdgeInsets.only(top: 10, right: 15, left: 15),
-                          child: TextFormField(
-                            maxLines: 1,
-                            autofocus: true,
-                            controller: _amountController,
-                            keyboardType: TextInputType.text,
-                            decoration: InputDecoration(
-                              labelText: 'Amount',
-                              hintText: 'Amount',
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(20.0),
-                              ),
-                            ),
-                          )),
-                      DropdownButton<String>(
-                        value: dropdownValue,
-                        icon: const Icon(Icons.arrow_downward),
-                        iconSize: 24,
-                        elevation: 16,
-                        style: const TextStyle(color: Colors.deepPurple),
-                        underline: Container(
-                          height: 2,
-                          color: Colors.deepPurpleAccent,
-                        ),
-                        onChanged: (String newValue) {
-                          setState(() {
-                            dropdownValue = newValue;
-                          });
-                        },
-                        items: <String>['You Paid', 'You are Owned']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                    height: getProportionateScreenHeight(310),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.rectangle,
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
                         children: <Widget>[
-                          // ignore: deprecated_member_use
-                          FlatButton(
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: Text(
-                              "Cancel".toUpperCase(),
-                              style: TextStyle(
-                                color: Colors.black,
-                              ),
+                          SizedBox(height: 24),
+                          Text(
+                            "add expense".toUpperCase(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 17,
                             ),
                           ),
-                          SizedBox(width: 8),
-                          // ignore: deprecated_member_use
-                          RaisedButton(
-                            color: Color(0xFF00BCD4),
-                            child: Text(
-                              "Save".toUpperCase(),
-                              style: TextStyle(
-                                color: Colors.indigo[900],
-                              ),
+                          SizedBox(height: 10),
+                          Padding(
+                              padding:
+                                  EdgeInsets.only(top: 10, right: 15, left: 15),
+                              child: TextField(
+                                maxLines: 1,
+                                // maxLength: 20,
+                                maxLengthEnforcement: MaxLengthEnforcement.none,
+                                autofocus: true,
+                                controller: _descriptionController,
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                  labelText: 'Description',
+                                  hintText: 'Description',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),
+                                ),
+                              )),
+                          Container(
+                            width: 150.0,
+                            height: 1.0,
+                            color: Colors.grey[400],
+                          ),
+                          Padding(
+                              padding:
+                                  EdgeInsets.only(top: 10, right: 15, left: 15),
+                              child: TextField(
+                                maxLines: 1,
+                                // maxLength: 6,
+                                maxLengthEnforcement: MaxLengthEnforcement.none,
+                                autofocus: true,
+                                controller: _amountController,
+                                keyboardType: TextInputType.text,
+                                decoration: InputDecoration(
+                                  labelText: 'Amount',
+                                  hintText: 'Amount',
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),
+                                ),
+                              )),
+                          DropdownButton<String>(
+                            value: dropdownValue,
+                            icon: const Icon(Icons.arrow_downward),
+                            iconSize: 24,
+                            elevation: 16,
+                            style: const TextStyle(color: Colors.deepPurple),
+                            underline: Container(
+                              height: 2,
+                              color: Colors.deepPurpleAccent,
                             ),
-                            onPressed: () {
-                              addExpense();
+                            onChanged: (String newValue) {
+                              setState(() {
+                                dropdownValue = newValue;
+                              });
                             },
-                          )
+                            items: <String>['You Paid', 'You are Owned']
+                                .map<DropdownMenuItem<String>>((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value),
+                              );
+                            }).toList(),
+                          ),
+                          SizedBox(height: 10),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              // ignore: deprecated_member_use
+                              FlatButton(
+                                focusColor: Colors.cyan,
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text(
+                                  "Cancel".toUpperCase(),
+                                  style: TextStyle(
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 8),
+                              // ignore: deprecated_member_use
+                              RaisedButton(
+                                color: Color(0xFF00BCD4),
+                                child: Text(
+                                  "Save".toUpperCase(),
+                                  style: TextStyle(
+                                    color: Colors.indigo[900],
+                                  ),
+                                ),
+                                onPressed: () {
+                                  if (_amountController.text.trim() != null &&
+                                      _descriptionController.text.trim() !=
+                                          null) {
+                                    addExpense();
+                                  } else {
+                                    Fluttertoast.showToast(
+                                        msg: 'Fill Details Correctly',
+                                        toastLength: Toast.LENGTH_SHORT,
+                                        gravity: ToastGravity.BOTTOM,
+                                        timeInSecForIosWeb: 1,
+                                        backgroundColor: Colors.blue,
+                                        textColor: Colors.white,
+                                        fontSize: 16.0);
+                                  }
+                                },
+                              )
+                            ],
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                ));
+                    )));
           });
         });
   }
@@ -491,14 +521,18 @@ class _DetailPageState extends State<DetailPage> {
     if (dropdownValue == 'You Paid') {
       add.add({
         'from': currentUserMobileNumber,
+        'fromName': name,
         'to': friendMobileNumber,
+        'toName': widget.post['name'],
         'amount': amount,
         'description': description,
       }).then((value) {
         String id = value.id;
         addToFriend.doc(id).set({
           'from': currentUserMobileNumber,
+          'fromName': name,
           'to': friendMobileNumber,
+          'toName': widget.post['name'],
           'amount': amount,
           'description': description,
         });
@@ -516,6 +550,8 @@ class _DetailPageState extends State<DetailPage> {
       add.add({
         'to': currentUserMobileNumber,
         'from': friendMobileNumber,
+        'fromName': widget.post['name'],
+        'toName': name,
         'amount': amount,
         'description': description,
       }).then((value) {
@@ -523,6 +559,8 @@ class _DetailPageState extends State<DetailPage> {
         addToFriend.doc(id).set({
           'to': currentUserMobileNumber,
           'from': friendMobileNumber,
+          'fromName': widget.post['name'],
+          'toName': name,
           'amount': amount,
           'description': description,
         });

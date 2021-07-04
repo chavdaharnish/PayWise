@@ -254,7 +254,6 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                                   _contact = contact;
                                   mobile = mobileEdit(_contact);
                                   addFriend();
-                                  Navigator.of(context).pop();
                                 })
                               },
                             ),
@@ -364,10 +363,6 @@ class _Friendsdashboard extends State<Friendsdashboard> {
 
     CollectionReference exist =
         FirebaseFirestore.instance.collection('Customer_Sign_In');
-    // CollectionReference add = FirebaseFirestore.instance
-    //     .collection('Customer_Sign_In')
-    //     .doc(email)
-    //     .collection('friends');
 
     exist.where('mobile', isEqualTo: mobile).get().then((value) => {
           if (value.size > 0)
@@ -382,15 +377,10 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                   EasyLoading.dismiss();
                 }
               }),
-              if (friendEmail != null)
+              if (friendEmail != null && currentUserName != null)
                 {
                   checkFriendExist(
                       email, friendEmail, friendName, currentUserName),
-                  // add.doc(friendEmail).set({
-                  //   'mobile': mobile,
-                  //   'email': friendEmail,
-                  //   'name': friendName,
-                  // }),
                 }
               else
                 {EasyLoading.dismiss()}
@@ -445,13 +435,13 @@ class _Friendsdashboard extends State<Friendsdashboard> {
             });
   }
 
-  friendSideAdd(String email, String name, String friendEmail) {
+  friendSideAdd(String email, String currentUserName, String friendEmail) {
     CollectionReference friendSideAdd =
         FirebaseFirestore.instance.collection('Customer_Sign_In');
     friendSideAdd.doc(friendEmail).collection('friends').doc(email).set({
       'mobile': currentUserMobileNumber,
       'email': email,
-      'name': name,
+      'name': currentUserName,
     }).then((value) => {
           EasyLoading.dismiss(),
           Fluttertoast.showToast(
