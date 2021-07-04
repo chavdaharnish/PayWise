@@ -375,6 +375,7 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                   friendEmail = element['email'];
                 } else {
                   EasyLoading.dismiss();
+                  Navigator.pop(context);
                 }
               }),
               if (friendEmail != null && currentUserName != null)
@@ -383,7 +384,10 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                       email, friendEmail, friendName, currentUserName),
                 }
               else
-                {EasyLoading.dismiss()}
+                {
+                  EasyLoading.dismiss(),
+                  Navigator.pop(context),
+                }
             }
           else
             {
@@ -395,7 +399,8 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                   timeInSecForIosWeb: 1,
                   backgroundColor: Colors.white,
                   textColor: Colors.black,
-                  fontSize: 16.0)
+                  fontSize: 16.0),
+              Navigator.pop(context),
             }
         });
   }
@@ -421,7 +426,8 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                       timeInSecForIosWeb: 1,
                       backgroundColor: Colors.white,
                       textColor: Colors.black,
-                      fontSize: 16.0)
+                      fontSize: 16.0),
+                  Navigator.pop(context),
                 }
               else
                 {
@@ -444,6 +450,7 @@ class _Friendsdashboard extends State<Friendsdashboard> {
       'name': currentUserName,
     }).then((value) => {
           EasyLoading.dismiss(),
+          Navigator.pop(context),
           Fluttertoast.showToast(
               msg: 'Successfully added',
               toastLength: Toast.LENGTH_LONG,
