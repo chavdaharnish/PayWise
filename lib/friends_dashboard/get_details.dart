@@ -23,6 +23,7 @@ class _DetailPageState extends State<DetailPage> {
   String currentUserNumber;
   int count = 0;
   void initState() {
+    total = 0;
     getFriend();
     _data = getData();
     super.initState();
@@ -84,12 +85,42 @@ class _DetailPageState extends State<DetailPage> {
         .doc(widget.post['email'])
         .collection('Expense')
         .get();
+
+    qn.docs.forEach((element) {
+      if (currentUserNumber != null) {
+        if (currentUserNumber == element['from']) {
+          setState(() {
+            total = total + int.parse(element['amount']);
+          });
+        } else {
+          setState(() {
+            total = total - int.parse(element['amount']);
+          });
+        }
+        updateTotal(total.toString());
+      }
+    });
     return qn.docs;
+  }
+
+  updateTotal(String total) async {
+    var updateTotal = FirebaseFirestore.instance.collection('Customer_Sign_In');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String email = prefs.getString('email');
+    updateTotal
+        .doc(email)
+        .collection('friends')
+        .doc(widget.post['email'])
+        .update({
+      'total': total,
+    });
   }
 
   String dropdownValue = 'You Paid';
   TextEditingController _descriptionController = TextEditingController();
   TextEditingController _amountController = TextEditingController();
+  static int total = 0;
+
   @override
   Widget build(BuildContext context) {
     final bool showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
@@ -118,155 +149,189 @@ class _DetailPageState extends State<DetailPage> {
               )
             : null,
         body: SafeArea(
-          child: Container(
-            padding: EdgeInsets.all(8.0),
-            child: FutureBuilder(
-                future: _data,
-                // ignore: missing_return
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(
-                      child: Text("Loading..."),
-                    );
-                  } else {
-                    if (snapshot.data != null) {
-                      if (snapshot.data.length > 0) {
-                        return ListView.separated(
-                            scrollDirection: Axis.vertical,
-                            padding: EdgeInsets.all(5),
-                            clipBehavior: Clip.hardEdge,
-                            separatorBuilder: (context, index) => Divider(
-                                  color: Colors.white,
-                                  height: 20,
-                                  thickness: 0,
-                                ),
-                            shrinkWrap: false,
-                            itemCount: snapshot.data.length,
-                            itemBuilder: (context, index) {
-                              final item = snapshot.data[index].toString();
-                              return Dismissible(
-                                  key: Key(item),
-                                  onDismissed: (direction) {},
-                                  background: Container(
-                                      color: Colors.red,
-                                      child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Padding(
-                                              padding: EdgeInsets.only(
-                                                  right:
-                                                      getProportionateScreenWidth(
-                                                          20)),
-                                              child: Icon(
-                                                Icons.delete_forever,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          ])),
-                                  child: Container(
-                                    child: ListTile(
-                                        // leading: Image.asset(
-                                        //   "assets/images/app_logo.png",
-                                        // ),
-                                        trailing: Text(
-                                            '\u20B9' +
-                                                snapshot.data[index]
-                                                    .data()['amount'],
-                                            style: TextStyle(
-                                                color: snapshot.data[index]
-                                                            .data()['from'] ==
-                                                        currentUserNumber
-                                                    ? Colors.green
-                                                    : Colors.red,
-                                                fontFamily: 'Muli',
-                                                fontWeight: FontWeight.bold,
-                                                fontSize:
-                                                    getProportionateScreenWidth(
-                                                        15))),
-                                        title: Text.rich(
-                                          TextSpan(
-                                            style:
-                                                TextStyle(color: Colors.black),
+            child: Column(children: [
+          total != null
+              ? Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding:
+                        EdgeInsets.only(right: getProportionateScreenWidth(25)),
+                    child: Text.rich(TextSpan(children: [
+                      TextSpan(
+                        text: 'Total : ',
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontFamily: 'Muli',
+                            fontWeight: FontWeight.bold,
+                            fontSize: getProportionateScreenHeight(15)),
+                      ),
+                      TextSpan(
+                        text: '\u20B9' + (total).abs().toString(),
+                        style: TextStyle(
+                            color: total < 0 ? Colors.red : Colors.green,
+                            fontFamily: 'Muli',
+                            fontWeight: FontWeight.bold,
+                            fontSize: getProportionateScreenHeight(15)),
+                      )
+                    ])),
+                  ),
+                )
+              : Text(''),
+          Expanded(
+            child: Container(
+              padding: EdgeInsets.all(8.0),
+              child: FutureBuilder(
+                  future: _data,
+                  // ignore: missing_return
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(
+                        child: Text("Loading..."),
+                      );
+                    } else {
+                      if (snapshot.data != null) {
+                        if (snapshot.data.length > 0) {
+                          return ListView.separated(
+                              scrollDirection: Axis.vertical,
+                              padding: EdgeInsets.all(5),
+                              clipBehavior: Clip.hardEdge,
+                              separatorBuilder: (context, index) => Divider(
+                                    color: Colors.white,
+                                    height: 20,
+                                    thickness: 0,
+                                  ),
+                              shrinkWrap: false,
+                              itemCount: snapshot.data.length,
+                              itemBuilder: (context, index) {
+                                final item = snapshot.data[index].toString();
+                                return Dismissible(
+                                    key: Key(item),
+                                    onDismissed: (direction) {},
+                                    background: Container(
+                                        color: Colors.red,
+                                        child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
                                             children: [
-                                              TextSpan(
-                                                text: 'From : ' +
-                                                    snapshot.data[index]
-                                                        .data()['fromName'],
-                                                style: TextStyle(
+                                              Padding(
+                                                padding: EdgeInsets.only(
+                                                    right:
+                                                        getProportionateScreenWidth(
+                                                            20)),
+                                                child: Icon(
+                                                  Icons.delete_forever,
+                                                  color: Colors.white,
+                                                ),
+                                              )
+                                            ])),
+                                    child: Container(
+                                      child: ListTile(
+                                          // leading: Image.asset(
+                                          //   "assets/images/app_logo.png",
+                                          // ),
+                                          trailing: Text(
+                                              '\u20B9' +
+                                                  snapshot.data[index]
+                                                      .data()['amount'],
+                                              style: TextStyle(
+                                                  color: snapshot.data[index]
+                                                              .data()['from'] ==
+                                                          currentUserNumber
+                                                      ? Colors.green
+                                                      : Colors.red,
                                                   fontFamily: 'Muli',
+                                                  fontWeight: FontWeight.bold,
                                                   fontSize:
                                                       getProportionateScreenWidth(
-                                                          14),
-                                                  fontWeight: FontWeight.bold,
+                                                          15))),
+                                          title: Text.rich(
+                                            TextSpan(
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                              children: [
+                                                TextSpan(
+                                                  text: 'From : ' +
+                                                      snapshot.data[index]
+                                                          .data()['fromName'],
+                                                  style: TextStyle(
+                                                    fontFamily: 'Muli',
+                                                    fontSize:
+                                                        getProportionateScreenWidth(
+                                                            14),
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        subtitle: Text.rich(
-                                          TextSpan(
-                                            style:
-                                                TextStyle(color: Colors.black),
-                                            children: [
-                                              TextSpan(
-                                                  text: 'To : ' +
-                                                      snapshot.data[index]
-                                                          .data()['toName']),
-                                              TextSpan(
-                                                  text: '\nDescription : ' +
-                                                      snapshot.data[index]
-                                                              .data()[
-                                                          'description']),
-                                            ],
+                                          subtitle: Text.rich(
+                                            TextSpan(
+                                              style: TextStyle(
+                                                  color: Colors.black),
+                                              children: [
+                                                TextSpan(
+                                                    text: 'To : ' +
+                                                        snapshot.data[index]
+                                                            .data()['toName']),
+                                                TextSpan(
+                                                    text: '\nDescription : ' +
+                                                        snapshot.data[index]
+                                                                .data()[
+                                                            'description']),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        onTap: () => {
-                                              // navigateToDetail(snapshot.data[index]),
-                                            }),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(8),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.5),
-                                          blurRadius: 6,
-                                          offset: Offset(-4, 4),
-                                        ),
-                                      ],
-                                    ),
-                                  ));
-                            });
-                      } else {
-                        return Column(
-                          // mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              height: getProportionateScreenHeight(150),
-                            ),
-                            Center(
-                                child: Image.asset(
-                              'assets/images/broke.png',
-                              scale: 2,
-                            )),
-                            Text(
-                              'No Expanses Yet',
-                              style: TextStyle(
-                                  fontFamily: 'Muli',
-                                  color: Colors.grey,
-                                  // fontWeight: FontWeight.bold,
-                                  fontSize: getProportionateScreenWidth(22)),
-                            )
-                          ],
-                        );
+                                          onTap: () => {
+                                                // navigateToDetail(snapshot.data[index]),
+                                              }),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.5),
+                                            blurRadius: 6,
+                                            offset: Offset(-4, 4),
+                                          ),
+                                        ],
+                                      ),
+                                    ));
+                              });
+                        } else {
+                          return SingleChildScrollView(
+                              child: Column(
+                            // mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              SizedBox(
+                                height: getProportionateScreenHeight(150),
+                              ),
+                              Center(
+                                  child: Image.asset(
+                                'assets/images/broke.png',
+                                scale: 2,
+                              )),
+                              Text(
+                                'No Expanses Yet',
+                                style: TextStyle(
+                                    fontFamily: 'Muli',
+                                    color: Colors.grey,
+                                    // fontWeight: FontWeight.bold,
+                                    fontSize: getProportionateScreenWidth(22)),
+                              )
+                            ],
+                          ));
+                        }
                       }
                     }
-                  }
-                }),
+                  }),
+            ),
           ),
-        ));
+          SizedBox(
+            height: getProportionateScreenHeight(50),
+          )
+        ])));
   }
 
   _displayDialog() {
@@ -307,8 +372,8 @@ class _DetailPageState extends State<DetailPage> {
                                   EdgeInsets.only(top: 10, right: 15, left: 15),
                               child: TextField(
                                 maxLines: 1,
-                                // maxLength: 20,
-                                maxLengthEnforcement: MaxLengthEnforcement.none,
+                                maxLengthEnforcement:
+                                    MaxLengthEnforcement.enforced,
                                 autofocus: true,
                                 controller: _descriptionController,
                                 keyboardType: TextInputType.text,
@@ -330,11 +395,10 @@ class _DetailPageState extends State<DetailPage> {
                                   EdgeInsets.only(top: 10, right: 15, left: 15),
                               child: TextField(
                                 maxLines: 1,
-                                // maxLength: 6,
                                 maxLengthEnforcement: MaxLengthEnforcement.none,
                                 autofocus: true,
                                 controller: _amountController,
-                                keyboardType: TextInputType.text,
+                                keyboardType: TextInputType.number,
                                 decoration: InputDecoration(
                                   labelText: 'Amount',
                                   hintText: 'Amount',

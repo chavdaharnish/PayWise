@@ -149,9 +149,18 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                                   leading: Image.asset(
                                     "assets/images/app_logo.png",
                                   ),
-                                  trailing: Text('\u20B9 100',
+                                  trailing: Text(
+                                      '\u20B9' +
+                                          (int.parse(snapshot.data[index]
+                                                  .data()['total']))
+                                              .abs()
+                                              .toString(),
                                       style: TextStyle(
-                                          color: Colors.red,
+                                          color: int.parse(snapshot.data[index]
+                                                      .data()['total']) <
+                                                  0
+                                              ? Colors.red
+                                              : Colors.green,
                                           fontFamily: 'Muli',
                                           fontWeight: FontWeight.bold,
                                           fontSize:
@@ -435,6 +444,7 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                     'mobile': mobile,
                     'email': friendEmail,
                     'name': friendName,
+                    'total': '0',
                   }),
                   friendSideAdd(email, currentUserName, friendEmail),
                 }
@@ -448,6 +458,7 @@ class _Friendsdashboard extends State<Friendsdashboard> {
       'mobile': currentUserMobileNumber,
       'email': email,
       'name': currentUserName,
+      'total': '0',
     }).then((value) => {
           EasyLoading.dismiss(),
           Navigator.pop(context),
