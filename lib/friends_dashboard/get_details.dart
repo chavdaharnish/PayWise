@@ -29,6 +29,13 @@ class _DetailPageState extends State<DetailPage> {
     super.initState();
   }
 
+  @protected
+  @mustCallSuper
+  void dispose() {
+    total = 0;
+    super.dispose();
+  }
+
   getFriend() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String email = prefs.getString('email');
@@ -86,6 +93,8 @@ class _DetailPageState extends State<DetailPage> {
         .collection('Expense')
         .get();
 
+    total = 0;
+
     qn.docs.forEach((element) {
       if (currentUserNumber != null) {
         if (currentUserNumber == element['from']) {
@@ -97,14 +106,16 @@ class _DetailPageState extends State<DetailPage> {
             total = total - int.parse(element['amount']);
           });
         }
-        updateTotal(total.toString());
       }
     });
+    updateTotal(total.toString());
     return qn.docs;
   }
 
   updateTotal(String total) async {
     var updateTotal = FirebaseFirestore.instance.collection('Customer_Sign_In');
+    var updateTotalFromFriendSide =
+        FirebaseFirestore.instance.collection('Customer_Sign_In');
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String email = prefs.getString('email');
     updateTotal
@@ -113,6 +124,14 @@ class _DetailPageState extends State<DetailPage> {
         .doc(widget.post['email'])
         .update({
       'total': total,
+    }).then((value) {
+      updateTotalFromFriendSide
+          .doc(widget.post['email'])
+          .collection('friends')
+          .doc(email)
+          .update({
+        'total': total,
+      });
     });
   }
 
@@ -575,12 +594,23 @@ class _DetailPageState extends State<DetailPage> {
         .doc(friendEmail)
         .collection('Expense');
 
+    CollectionReference addHistory = FirebaseFirestore.instance
+        .collection('Customer_Sign_In')
+        .doc(email)
+        .collection('history');
+
     CollectionReference addToFriend = FirebaseFirestore.instance
         .collection('Customer_Sign_In')
         .doc(friendEmail)
         .collection('friends')
         .doc(email)
         .collection('Expense');
+
+    CollectionReference addHistoryToFriend = FirebaseFirestore.instance
+        .collection('Customer_Sign_In')
+        .doc(friendEmail)
+        .collection('history');
+    String id;
 
     if (dropdownValue == 'You Paid') {
       add.add({
@@ -591,7 +621,7 @@ class _DetailPageState extends State<DetailPage> {
         'amount': amount,
         'description': description,
       }).then((value) {
-        String id = value.id;
+        id = value.id;
         addToFriend.doc(id).set({
           'from': currentUserMobileNumber,
           'fromName': name,
@@ -599,6 +629,24 @@ class _DetailPageState extends State<DetailPage> {
           'toName': widget.post['name'],
           'amount': amount,
           'description': description,
+        }).then((value) {
+          addHistory.doc(id).set({
+            'from': currentUserMobileNumber,
+            'fromName': name,
+            'to': friendMobileNumber,
+            'toName': widget.post['name'],
+            'amount': amount,
+            'description': description,
+          }).then((value) {
+            addHistoryToFriend.doc(id).set({
+              'from': currentUserMobileNumber,
+              'fromName': name,
+              'to': friendMobileNumber,
+              'toName': widget.post['name'],
+              'amount': amount,
+              'description': description,
+            });
+          });
         });
         EasyLoading.dismiss();
         setState(() {
@@ -619,7 +667,7 @@ class _DetailPageState extends State<DetailPage> {
         'amount': amount,
         'description': description,
       }).then((value) {
-        String id = value.id;
+        id = value.id;
         addToFriend.doc(id).set({
           'to': currentUserMobileNumber,
           'from': friendMobileNumber,
@@ -627,6 +675,24 @@ class _DetailPageState extends State<DetailPage> {
           'toName': name,
           'amount': amount,
           'description': description,
+        }).then((value) {
+          addHistory.doc(id).set({
+            'to': currentUserMobileNumber,
+            'from': friendMobileNumber,
+            'fromName': widget.post['name'],
+            'toName': name,
+            'amount': amount,
+            'description': description,
+          }).then((value) {
+            addHistoryToFriend.doc(id).set({
+              'to': currentUserMobileNumber,
+              'from': friendMobileNumber,
+              'fromName': widget.post['name'],
+              'toName': name,
+              'amount': amount,
+              'description': description,
+            });
+          });
         });
         EasyLoading.dismiss();
         setState(() {

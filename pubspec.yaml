@@ -46,7 +46,7 @@ dependencies:
   image_picker: any
   permission_handler: any
   contact_picker: any
-  
+  firebase_messaging: any
 
 dev_dependencies:
   flutter_test:
