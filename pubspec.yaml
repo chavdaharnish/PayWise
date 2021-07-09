@@ -47,6 +47,7 @@ dependencies:
   permission_handler: any
   contact_picker: any
   firebase_messaging: any
+  month_picker_dialog: any
 
 dev_dependencies:
   flutter_test:

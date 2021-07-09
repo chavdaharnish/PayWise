@@ -8,7 +8,6 @@ import 'package:paywise/account/profile_pic.dart';
 import 'package:paywise/sign_in/sign_in_screen.dart';
 import 'package:paywise/size_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../user_detail.dart';
 
 class Account extends StatefulWidget {

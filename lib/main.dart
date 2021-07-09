@@ -4,6 +4,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:paywise/routes.dart';
 import 'package:paywise/splash/splash_screen.dart';
 import 'package:paywise/theme.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,7 @@ void main() async {
   runApp(MyApp());
   configLoading();
 }
+
 void configLoading() {
   EasyLoading.instance
     ..displayDuration = const Duration(milliseconds: 2000)
@@ -26,14 +28,31 @@ void configLoading() {
     ..userInteractions = true
     ..dismissOnTap = false;
 }
+
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ],
+      supportedLocales: [
+        Locale('en'),
+        Locale('zh'),
+        Locale('fr'),
+        Locale('es'),
+        Locale('de'),
+        Locale('ru'),
+        Locale('ja'),
+        Locale('ar'),
+        Locale('fa'),
+        Locale("es"),
+      ],
       debugShowCheckedModeBanner: false,
       title: 'PayWise',
       theme: theme(),
-      home : SplashScreen(),
+      home: SplashScreen(),
       routes: routes,
       builder: EasyLoading.init(),
     );

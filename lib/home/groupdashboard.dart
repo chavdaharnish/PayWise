@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paywise/expense_tracker/Tracker.dart';
 import 'package:paywise/size_config.dart';
 
 class ExpenseTracker extends StatefulWidget {
@@ -7,21 +8,6 @@ class ExpenseTracker extends StatefulWidget {
 }
 
 class _ExpenseTracker extends State<ExpenseTracker> {
-  // _displayDialog() {
-  //   return showDialog(
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return Dialog(
-  //           shape: RoundedRectangleBorder(
-  //             borderRadius: BorderRadius.circular(50),
-  //           ),
-  //           elevation: 6,
-  //           backgroundColor: Colors.transparent,
-  //           // child: _DialogWithTextField(context),
-  //         );
-  //       });
-  // }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,8 +16,98 @@ class _ExpenseTracker extends State<ExpenseTracker> {
         child: Column(
           // mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
+                  ),
+                  color: Colors.blueGrey,
+                  elevation: 10,
+                  child: Padding(
+                    // padding: const EdgeInsets.only(left: 25, top: 10, bottom: 10),
+                    padding: EdgeInsets.all(10),
+                    child: Table(
+                      defaultVerticalAlignment:
+                          TableCellVerticalAlignment.middle,
+                      children: [
+                        TableRow(children: [
+                          Center(
+                            child: Text(
+                              "Income",
+                              textScaleFactor: 1.5,
+                              style: TextStyle(
+                                  fontFamily: "muli",
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2),
+                            ),
+                          ),
+                          Center(
+                            child: Text(
+                              "Expense",
+                              textScaleFactor: 1.5,
+                              style: TextStyle(
+                                  fontFamily: "muli",
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2),
+                            ),
+                          ),
+                          Center(
+                              child: Text(
+                            "Balance",
+                            textScaleFactor: 1.5,
+                            style: TextStyle(
+                                fontFamily: "muli",
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2),
+                          )),
+                        ]),
+                        TableRow(children: [
+                          Center(
+                            child: Text(
+                              "0",
+                              textScaleFactor: 1.5,
+                              style: TextStyle(
+                                  fontFamily: "muli",
+                                  color: Colors.white,
+                                  fontSize: getProportionateScreenWidth(12),
+                                  // fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2),
+                            ),
+                          ),
+                          Center(
+                            child: Text(
+                              "0",
+                              textScaleFactor: 1.5,
+                              style: TextStyle(
+                                  fontFamily: "muli",
+                                  color: Colors.white,
+                                  fontSize: getProportionateScreenWidth(12),
+                                  // fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2),
+                            ),
+                          ),
+                          Center(
+                              child: Text(
+                            "0",
+                            textScaleFactor: 1.5,
+                            style: TextStyle(
+                                fontFamily: "muli",
+                                color: Colors.white,
+                                fontSize: getProportionateScreenWidth(12),
+                                // fontWeight: FontWeight.bold,
+                                letterSpacing: 1.2),
+                          )),
+                        ])
+                      ],
+                    ),
+                  )),
+            ),
             SizedBox(
-              height: getProportionateScreenHeight(150),
+              height: getProportionateScreenHeight(120),
             ),
             Center(
                 child: Image.asset(
@@ -59,7 +135,10 @@ class _ExpenseTracker extends State<ExpenseTracker> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.cyan,
         foregroundColor: Colors.white,
-         onPressed: (){},
+        onPressed: () {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => TrackerDetails()));
+        },
         icon: Icon(Icons.add_circle),
         label: Text(
           'Create Own Expense',
@@ -70,87 +149,3 @@ class _ExpenseTracker extends State<ExpenseTracker> {
     );
   }
 }
-
-// ignore: non_constant_identifier_names
-// Widget _DialogWithTextField(BuildContext context) => Container(
-//       height: 320,
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         shape: BoxShape.rectangle,
-//         borderRadius: BorderRadius.all(Radius.circular(10)),
-//       ),
-//       child: Column(
-//         children: <Widget>[
-//           SizedBox(height: 24),
-//           Text(
-//             "create group".toUpperCase(),
-//             textAlign: TextAlign.center,
-//             style: TextStyle(
-//               color: Colors.black,
-//               fontWeight: FontWeight.bold,
-//               fontSize: 17,
-//             ),
-//           ),
-//           SizedBox(height: 10),
-//           Padding(
-//             padding: EdgeInsets.only(top: 10, bottom: 10, right: 15, left: 15),
-//             child: Icon(
-//               Icons.account_circle,
-//               size: 100,
-//             ),
-//           ),
-//           Container(
-//             width: 150.0,
-//             height: 1.0,
-//             color: Colors.grey[400],
-//           ),
-//           Padding(
-//               padding: EdgeInsets.only(top: 10, right: 15, left: 15),
-//               child: TextFormField(
-//                 maxLines: 1,
-//                 autofocus: true,
-//                 keyboardType: TextInputType.text,
-//                 decoration: InputDecoration(
-//                   labelText: 'Group Name',
-//                   hintText: 'Group Name',
-//                   border: OutlineInputBorder(
-//                     borderRadius: BorderRadius.circular(20.0),
-//                   ),
-//                 ),
-//               )),
-//           SizedBox(height: 10),
-//           Row(
-//             mainAxisSize: MainAxisSize.min,
-//             children: <Widget>[
-//               // ignore: deprecated_member_use
-//               FlatButton(
-//                 onPressed: () {
-//                   Navigator.of(context).pop();
-//                 },
-//                 child: Text(
-//                   "Cancel".toUpperCase(),
-//                   style: TextStyle(
-//                     color: Colors.black,
-//                   ),
-//                 ),
-//               ),
-//               SizedBox(width: 8),
-//               // ignore: deprecated_member_use
-//               RaisedButton(
-//                 color: Color(0xFF00BCD4),
-//                 child: Text(
-//                   "Save".toUpperCase(),
-//                   style: TextStyle(
-//                     color: Colors.indigo[900],
-//                   ),
-//                 ),
-//                 onPressed: () {
-//                   print('Update the user info');
-//                   // return Navigator.of(context).pop(true);
-//                 },
-//               )
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
