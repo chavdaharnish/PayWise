@@ -20,11 +20,11 @@ class _BodyState extends State<Body> {
     },
     {
       "text": "We help people to split their money.\nto their friends and family",
-      "image": "assets/images/car_logo.jpg"
+      "image": "assets/images/app_logo.png"
     },
     {
       "text": "No needs of paper to remember the bills. \nJust do Paywise",
-      "image": "assets/images/wash_logo.jpg"
+      "image": "assets/images/app_logo.png"
     },
   ];
 

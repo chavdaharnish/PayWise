@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:paywise/friends_dashboard/get_details.dart';
+import 'package:paywise/helper/DeviceToken.dart';
 import 'package:paywise/size_config.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -234,6 +235,8 @@ class _Friendsdashboard extends State<Friendsdashboard> {
               }
             }),
       ),
+      floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: const Color(0xFF00BCD4),
         foregroundColor: Colors.white,
@@ -300,7 +303,7 @@ class _Friendsdashboard extends State<Friendsdashboard> {
           }
           // Navigator.pushNamed(context, AddFriend.routeName);
         },
-        icon: Icon(Icons.add),
+        icon: Icon(Icons.add_circle),
         label: Text('Friend',
             style: TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Muli')),
       ),
@@ -368,50 +371,51 @@ class _Friendsdashboard extends State<Friendsdashboard> {
                 }
               else
                 {EasyLoading.dismiss()}
-            });
+            })
+        .then((value) {
+      CollectionReference exist =
+          FirebaseFirestore.instance.collection('Customer_Sign_In');
 
-    CollectionReference exist =
-        FirebaseFirestore.instance.collection('Customer_Sign_In');
-
-    exist.where('mobile', isEqualTo: mobile).get().then((value) => {
-          if (value.size > 0)
-            {
-              value.docs.forEach((element) {
-                if (element['fname'] != null &&
-                    element['lname'] != null &&
-                    element['email'] != null) {
-                  friendName = element['fname'] + ' ' + element['lname'];
-                  friendEmail = element['email'];
-                } else {
-                  EasyLoading.dismiss();
-                  Navigator.pop(context);
-                }
-              }),
-              if (friendEmail != null && currentUserName != null)
-                {
-                  checkFriendExist(
-                      email, friendEmail, friendName, currentUserName),
-                }
-              else
-                {
-                  EasyLoading.dismiss(),
-                  Navigator.pop(context),
-                }
-            }
-          else
-            {
-              EasyLoading.dismiss(),
-              Fluttertoast.showToast(
-                  msg: '$mobile not exist in the app',
-                  toastLength: Toast.LENGTH_LONG,
-                  gravity: ToastGravity.BOTTOM,
-                  timeInSecForIosWeb: 1,
-                  backgroundColor: Colors.white,
-                  textColor: Colors.black,
-                  fontSize: 16.0),
-              Navigator.pop(context),
-            }
-        });
+      exist.where('mobile', isEqualTo: mobile).get().then((value) => {
+            if (value.size > 0)
+              {
+                value.docs.forEach((element) {
+                  if (element['fname'] != null &&
+                      element['lname'] != null &&
+                      element['email'] != null) {
+                    friendName = element['fname'] + ' ' + element['lname'];
+                    friendEmail = element['email'];
+                  } else {
+                    EasyLoading.dismiss();
+                    Navigator.pop(context);
+                  }
+                }),
+                if (friendEmail != null && currentUserName != null)
+                  {
+                    checkFriendExist(
+                        email, friendEmail, friendName, currentUserName),
+                  }
+                else
+                  {
+                    EasyLoading.dismiss(),
+                    Navigator.pop(context),
+                  }
+              }
+            else
+              {
+                EasyLoading.dismiss(),
+                Fluttertoast.showToast(
+                    msg: '$mobile not exist in the app',
+                    toastLength: Toast.LENGTH_LONG,
+                    gravity: ToastGravity.BOTTOM,
+                    timeInSecForIosWeb: 1,
+                    backgroundColor: Colors.white,
+                    textColor: Colors.black,
+                    fontSize: 16.0),
+                Navigator.pop(context),
+              }
+          });
+    });
   }
 
   checkFriendExist(String email, String friendEmail, String friendName,
@@ -460,23 +464,39 @@ class _Friendsdashboard extends State<Friendsdashboard> {
       'name': currentUserName,
       'total': '0',
     }).then((value) => {
-          EasyLoading.dismiss(),
-          Navigator.pop(context),
-          Fluttertoast.showToast(
-              msg: 'Successfully added',
-              toastLength: Toast.LENGTH_LONG,
-              gravity: ToastGravity.BOTTOM,
-              timeInSecForIosWeb: 1,
-              backgroundColor: Colors.white,
-              textColor: Colors.black,
-              fontSize: 16.0),
-          setState(() {
-            count = 1;
-            if (count == 1) {
-              _data = getFriends();
-              count = 0;
+          friendSideAdd
+              .where("email", isEqualTo: friendEmail)
+              .get()
+              .then((value) {
+            String token;
+            if (value.size > 0) {
+              value.docs.forEach((element) {
+                if (element['devicetoken'] != null &&
+                    element['devicetoken'] != "") {
+                  token = element['devicetoken'];
+                  sendFriendNotification(currentUserName, token);
+                }
+              });
             }
-          })
+          }).then((value) {
+            EasyLoading.dismiss();
+            Navigator.pop(context);
+            Fluttertoast.showToast(
+                msg: 'Successfully added',
+                toastLength: Toast.LENGTH_LONG,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIosWeb: 1,
+                backgroundColor: Colors.white,
+                textColor: Colors.black,
+                fontSize: 16.0);
+            setState(() {
+              count = 1;
+              if (count == 1) {
+                _data = getFriends();
+                count = 0;
+              }
+            });
+          }),
         });
   }
 }
