@@ -41,7 +41,7 @@ class _TrackerDetailsState extends State<TrackerDetails> {
                 dropdownValue = newValue;
               });
             },
-            items: <String>['Expense', 'Income', 'Balance']
+            items: <String>['Expense', 'Income']
                 .map<DropdownMenuItem<String>>((String value) {
               return DropdownMenuItem<String>(
                   value: value,
@@ -83,7 +83,7 @@ class _TrackerDetailsState extends State<TrackerDetails> {
               // ),
               // SizedBox(height: SizeConfig.screenHeight * 0.01),
               Text(
-                "You can change Expense to Income or Balance and add money",
+                "You can set montly Income and deduct expenses from it.",
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: SizeConfig.screenHeight * 0.04),
