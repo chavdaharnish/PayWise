@@ -96,7 +96,7 @@ class _ExpenseTracker extends State<ExpenseTracker> {
                       TableRow(children: [
                         Center(
                           child: Text(
-                            "3600",
+                            "5000",
                             textScaleFactor: 1.5,
                             style: TextStyle(
                                 fontFamily: "muli",
@@ -120,7 +120,7 @@ class _ExpenseTracker extends State<ExpenseTracker> {
                         ),
                         Center(
                             child: Text(
-                          "4000",
+                          "4600",
                           textScaleFactor: 1.5,
                           style: TextStyle(
                               fontFamily: "muli",
