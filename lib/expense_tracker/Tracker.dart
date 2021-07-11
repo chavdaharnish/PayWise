@@ -1,7 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:paywise/home/home_screen.dart';
 import 'package:paywise/size_config.dart';
 import 'package:month_picker_dialog/month_picker_dialog.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TrackerDetails extends StatefulWidget {
   @override
@@ -11,7 +15,8 @@ class TrackerDetails extends StatefulWidget {
 class _TrackerDetailsState extends State<TrackerDetails> {
   String dropdownValue = 'Expense';
   DateTime selectedDate;
-  // DateTime? selectedDate;
+  TextEditingController _descriptionController = TextEditingController();
+  TextEditingController _amountController = TextEditingController();
 
   @override
   void initState() {
@@ -32,7 +37,9 @@ class _TrackerDetailsState extends State<TrackerDetails> {
 
   @override
   Widget build(BuildContext context) {
+    final bool showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
     return Scaffold(
+        resizeToAvoidBottomInset: true,
         appBar: AppBar(
           title: DropdownButton<String>(
             value: dropdownValue,
@@ -61,12 +68,24 @@ class _TrackerDetailsState extends State<TrackerDetails> {
         ),
         floatingActionButtonAnimator: FloatingActionButtonAnimator.scaling,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {},
-          backgroundColor: Colors.cyan,
-          label: Text("Add"),
-          icon: Icon(Icons.add_circle),
-        ),
+        floatingActionButton: showFab
+            ? Transform.scale(
+                scale: 1.1,
+                child: FloatingActionButton.extended(
+                  onPressed: () {
+                    String des, amount;
+                    des = _descriptionController.text.trim();
+                    amount = _amountController.text.trim();
+                    if (des != null && amount != null) {
+                      EasyLoading.show(status: 'loading...');
+                      addDetails(selectedDate, des, amount);
+                    }
+                  },
+                  backgroundColor: Colors.cyan,
+                  label: Text("Add"),
+                  icon: Icon(Icons.add_circle),
+                ))
+            : null,
         body: SingleChildScrollView(
           padding: EdgeInsets.all(getProportionateScreenWidth(10)),
           child: Column(
@@ -124,7 +143,6 @@ class _TrackerDetailsState extends State<TrackerDetails> {
                       fontWeight: FontWeight.bold,
                       fontFamily: 'muli',
                       color: Colors.white),
-                  // textAlign: TextAlign.center,
                 ),
                 // child: Text(
                 //   "${selectedDate.toLocal()}".split(' ')[0],
@@ -139,32 +157,65 @@ class _TrackerDetailsState extends State<TrackerDetails> {
         ));
   }
 
+  addDetails(var date, var des, var amount) async {
+    var addTracker = FirebaseFirestore.instance.collection('Customer_Sign_In');
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String email = prefs.getString('email');
+    String finalDate = date?.month.toString() + " " + date?.year.toString();
+
+    addTracker
+        .doc(email)
+        .collection('tracker')
+        .doc(finalDate)
+        .collection('Expense')
+        .add({
+      'description': des,
+      'amount': amount,
+      'finalDate': finalDate,
+      'type': dropdownValue
+    }).then((value) {
+      EasyLoading.dismiss();
+      Fluttertoast.showToast(
+          msg: '...Data Added Successfully...',
+          toastLength: Toast.LENGTH_SHORT,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.blue,
+          textColor: Colors.white,
+          fontSize: 16.0);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (BuildContext context) => HomeScreen(),
+        ),
+        (route) => false,
+      );
+    });
+  }
+
   TextFormField buildDescriptionFormField() {
     return TextFormField(
       keyboardType: TextInputType.text,
+      controller: _descriptionController,
       decoration: InputDecoration(
-        labelText: "Description",
-        hintText: "Enter your Description",
-        // If  you are using latest version of flutter then lable text and hint text shown like this
-        // if you r using flutter less then 1.20.* then maybe this is not working properly
-        floatingLabelBehavior: FloatingLabelBehavior.always,
-        // icon: Icon(Icons.note),
-        // suffixIcon: CustomSurffixIcon(svgIcon: "assets/icons/Mail.svg"),
-      ),
+          labelText: "Description",
+          hintText: "Enter your Description",
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          suffixIcon: Icon(
+            Icons.notes_rounded,
+            color: Colors.cyan,
+          )),
     );
   }
 
   TextFormField buildAmountFormField() {
     return TextFormField(
       keyboardType: TextInputType.number,
+      controller: _amountController,
       decoration: InputDecoration(
         labelText: "Amount",
         hintText: "Enter your Amount",
-        // If  you are using latest version of flutter then lable text and hint text shown like this
-        // if you r using flutter less then 1.20.* then maybe this is not working properly
         floatingLabelBehavior: FloatingLabelBehavior.always,
-        // icon: Icon(Icons.note),
-        // suffixIcon: CustomSurffixIcon(svgIcon: "assets/icons/Mail.svg"),
       ),
     );
   }
