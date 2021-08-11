@@ -162,34 +162,39 @@ class _TrackerDetailsState extends State<TrackerDetails> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String email = prefs.getString('email');
     String finalDate = date?.month.toString() + " " + date?.year.toString();
-
     addTracker
         .doc(email)
         .collection('tracker')
         .doc(finalDate)
-        .collection('Expense')
-        .add({
-      'description': des,
-      'amount': amount,
-      'finalDate': finalDate,
-      'type': dropdownValue
-    }).then((value) {
-      EasyLoading.dismiss();
-      Fluttertoast.showToast(
-          msg: '...Data Added Successfully...',
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.blue,
-          textColor: Colors.white,
-          fontSize: 16.0);
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (BuildContext context) => HomeScreen(),
-        ),
-        (route) => false,
-      );
+        .set({'date': finalDate}).then((value) {
+      addTracker
+          .doc(email)
+          .collection('tracker')
+          .doc(finalDate)
+          .collection('Expense')
+          .add({
+        'description': des,
+        'amount': amount,
+        'finalDate': finalDate,
+        'type': dropdownValue
+      }).then((value) {
+        EasyLoading.dismiss();
+        Fluttertoast.showToast(
+            msg: '...Data Added Successfully...',
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.BOTTOM,
+            timeInSecForIosWeb: 1,
+            backgroundColor: Colors.blue,
+            textColor: Colors.white,
+            fontSize: 16.0);
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (BuildContext context) => HomeScreen(),
+          ),
+          (route) => false,
+        );
+      });
     });
   }
 
